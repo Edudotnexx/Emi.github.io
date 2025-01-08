@@ -1,4 +1,5 @@
 import fetch from 'node-fetch';
+import fs from 'fs';
 
 const subLink = 'https://raw.githubusercontent.com/Edudotnexx/Ftest/refs/heads/main/Kdowiw';
 
@@ -13,7 +14,45 @@ async function fetchData() {
 
     // پردازش داده‌ها
     const newConfigs = processSubConfigs(subConfigs, 'example.com', 'example-path');
-    console.log(newConfigs);
+
+    // ایجاد فایل HTML
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>GitHub Pages Output</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+          }
+          h1 {
+            color: #333;
+          }
+          pre {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            overflow-x: auto;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>Output:</h1>
+        <pre>${newConfigs}</pre>
+      </body>
+      </html>
+    `;
+
+    // ذخیره فایل HTML در پوشه docs
+    if (!fs.existsSync('docs')) {
+      fs.mkdirSync('docs');
+    }
+    fs.writeFileSync('docs/index.html', htmlContent);
+    console.log('HTML file created successfully!');
   } catch (error) {
     console.error('Error fetching or processing data:', error);
   }
