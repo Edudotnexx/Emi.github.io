@@ -1,59 +1,79 @@
-const express = require('express');
-const app = express();
-const fetch = require('node-fetch');
-const subLink = 'https://raw.githubusercontent.com/MrMohebi/xray-proxy-grabber-telegram/master/collected-proxies/row-url/all.txt';
+import fetch from 'node-fetch';
 
-app.get('/sub', async (req, res) => {
+const subLink = 'https://raw.githubusercontent.com/Edudotnexx/Ftest/refs/heads/main/Kdowiw';
+
+async function fetchData() {
+  try {
+    // دریافت داده‌ها از لینک
+    const resp = await fetch(subLink);
+    if (!resp.ok) {
+      throw new Error(`HTTP error! status: ${resp.status}`);
+    }
+    const subConfigs = await resp.text();
+
+    // پردازش داده‌ها
+    const newConfigs = processSubConfigs(subConfigs, 'example.com', 'example-path');
+    console.log(newConfigs);
+  } catch (error) {
+    console.error('Error fetching or processing data:', error);
+  }
+}
+
+function processSubConfigs(subConfigs, hostname, pathname) {
   let newConfigs = '';
-  let resp = await fetch(subLink);
-  let subConfigs = await resp.text();
-  subConfigs = subConfigs.split('\n');
-  for (let subConfig of subConfigs) {
-    if (subConfig.search('vmess') != -1) {
-      subConfig = subConfig.replace('vmess://', '');
-      subConfig = Buffer.from(subConfig, 'base64').toString('utf-8');
-      subConfig = JSON.parse(subConfig);
-      if (subConfig.sni && !isIp(subConfig.sni) && subConfig.net == 'ws' && subConfig.port == 443) {
-        var configNew = {
-          v: '2',
-          ps: 'Node-' + subConfig.sni,
-          add: req.query.realpathname || req.hostname,
-          port: subConfig.port,
-          id: subConfig.id,
-          net: subConfig.net,
-          host: req.hostname,
-          path: '/' + subConfig.sni + subConfig.path,
-          tls: subConfig.tls,
-          sni: req.hostname,
-          aid: '0',
-          scy: 'auto',
-          type: 'auto',
-          fp: 'chrome',
-          alpn: 'http/1.1'
-        };
-        configNew = 'vmess://' + Buffer.from(JSON.stringify(configNew)).toString('base64');
-        newConfigs += configNew + '\n';
+  const configLines = subConfigs.split('\n');
+
+  for (let subConfig of configLines) {
+    if (subConfig.includes('vmess')) {
+      try {
+        subConfig = subConfig.replace('vmess://', '');
+        subConfig = Buffer.from(subConfig, 'base64').toString('utf-8');
+        subConfig = JSON.parse(subConfig);
+
+        if (subConfig.sni && !isIp(subConfig.sni) && subConfig.net === 'ws' && subConfig.port === 443) {
+          const configNew = {
+            v: '2',
+            ps: 'Node-' + subConfig.sni,
+            add: pathname || hostname,
+            port: subConfig.port,
+            id: subConfig.id,
+            net: subConfig.net,
+            host: hostname,
+            path: '/' + subConfig.sni + (subConfig.path || ''),
+            tls: subConfig.tls,
+            sni: hostname,
+            aid: '0',
+            scy: 'auto',
+            type: 'auto',
+            fp: 'chrome',
+            alpn: 'http/1.1',
+          };
+          const encodedConfig = 'vmess://' + Buffer.from(JSON.stringify(configNew)).toString('base64');
+          newConfigs += encodedConfig + '\n';
+        }
+      } catch (error) {
+        console.error('Error processing subConfig:', error);
       }
     }
   }
-  res.send(newConfigs);
-});
 
-app.listen(3000, () => {
-  console.log('Server is running on port 3000');
-});
+  return newConfigs;
+}
 
 function isIp(ipstr) {
   try {
-    if (ipstr == "" || ipstr == undefined) return false;
-    if (!/^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])(\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])){2}\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-4])$/.test(ipstr)) {
-      return false;
-    }
-    var ls = ipstr.split('.');
-    if (ls == null || ls.length != 4 || ls[3] == "0" || parseInt(ls[3]) === 0) {
-      return false;
-    }
+    if (!ipstr) return false;
+    const ipPattern = /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])(\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])){2}\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-4])$/;
+    if (!ipPattern.test(ipstr)) return false;
+
+    const parts = ipstr.split('.');
+    if (parts.length !== 4 || parts[3] === "0" || parseInt(parts[3]) === 0) return false;
+
     return true;
-  } catch (ee) { }
-  return false;
+  } catch (error) {
+    return false;
+  }
 }
+
+// اجرای تابع اصلی
+fetchData();
