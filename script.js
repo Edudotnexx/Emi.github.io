@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const fetch = require('node-fetch');
-const subLink = 'https://raw.githubusercontent.com/Edudotnexx/Ftest/refs/heads/main/Kdowiw';
+const subLink = 'https://raw.githubusercontent.com/MrMohebi/xray-proxy-grabber-telegram/master/collected-proxies/row-url/all.txt';
 
 app.get('/sub', async (req, res) => {
   let newConfigs = '';
